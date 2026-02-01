@@ -1,0 +1,35 @@
+name: Build Debug APK (Docker)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # Run the entire job inside a Docker container
+    container:
+      image: ghcr.io/cirruslabs/android-sdk:36
+      options: --user root
+
+    steps:
+      - name: Install basics (git, unzip)
+        run: |
+          apt-get update
+          apt-get install -y git unzip
+
+      - name: Checkout source
+        uses: actions/checkout@v5
+
+      - name: Build debug APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/*.apk
