@@ -1,34 +1,33 @@
-name: Build Debug APK (Docker)
+name: Build Debug APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main", "master" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    # Run the entire job inside a Docker container
     container:
       image: ghcr.io/cirruslabs/android-sdk:36
       options: --user root
 
     steps:
-      - name: Install basics (git, unzip)
+      - uses: actions/checkout@v5
+
+      - name: Install Java 11 (Gradle 5.4.1 needs <= 12)
         run: |
           apt-get update
-          apt-get install -y git unzip
+          apt-get install -y openjdk-11-jdk
+          echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+          echo "/usr/lib/jvm/java-11-openjdk-amd64/bin" >> $GITHUB_PATH
+          java -version
 
-      - name: Checkout source
-        uses: actions/checkout@v5
-
-      - name: Build debug APK
+      - name: Build
         run: |
           chmod +x ./gradlew
+          ./gradlew --no-daemon -version
           ./gradlew --no-daemon assembleDebug
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
